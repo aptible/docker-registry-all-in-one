@@ -1,0 +1,35 @@
+FROM quay.io/aptible/ubuntu:16.04
+# TODO: quay.io/aptible/ubuntu 16.04
+
+RUN apt-get update \
+ && apt-get -y install apache2-utils nginx ruby redis-server python python-pip \
+    openssl git ca-certificates net-tools netcat curl \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install supervisor==3.3.0
+
+ADD <%= ENV.fetch 'TAG' %>/install-registry.sh /
+ADD patches /patches
+RUN /install-registry.sh
+
+ADD bin/exit-event-listener /usr/local/bin/
+ADD bin/docker-registry-proxy /usr/local/bin/
+ADD bin/docker-registry-bootstrap /usr/local/bin/
+
+ADD etc/supervisord.conf /etc/supervisord.conf
+ADD etc/redis.conf /etc/redis/redis.conf
+ADD etc/nginx.conf /etc/nginx/nginx.conf
+ADD <%= ENV.fetch 'TAG' %>/proxy.conf.erb /etc/nginx/sites-available/
+
+# BATS tests are run in a container in test.sh, which ensures we don't
+# accidentally leave test files laying around.
+ADD test /tmp/test
+ADD <%= ENV.fetch 'TAG' %>/test /tmp/test
+
+# When running a container from this image, map a directory containing
+# docker-registry-proxy.crt and docker-registry-proxy.key to this volume, e.g.,
+# "-v /path/to/my/keys:/etc/nginx/ssl"
+VOLUME /etc/nginx/ssl
+EXPOSE 443
+
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
