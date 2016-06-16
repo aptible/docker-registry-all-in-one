@@ -1,0 +1,30 @@
+language: generic
+sudo: true
+
+services:
+  - docker
+
+env:
+  matrix:
+    - TAG=1
+    - TAG=2
+
+# We have muck around with the Docker configuration so that we can use Docker
+# to test our Docker registry without needing a valid cert.
+script:
+  - sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:12000 /g' -i /etc/default/docker
+  - sudo service docker restart
+  - make build
+  - make test
+
+before_deploy:
+  - export DOCKER_CONFIG="${HOME}/.docker"
+  - mkdir -p "$DOCKER_CONFIG"
+  - openssl aes-256-cbc -K "$DOCKER_CONF_key" -iv "$DOCKER_CONF_iv" -in .docker/config.json.enc -out "${DOCKER_CONFIG}/config.json" -d
+
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: make push
+  on:
+    branch: master

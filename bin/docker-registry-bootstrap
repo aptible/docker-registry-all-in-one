@@ -1,0 +1,17 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+if which docker-registry; then
+  # v1
+  export CACHE_LRU_REDIS_HOST='127.0.0.1'
+  export CACHE_LRU_REDIS_PORT='6379'
+  export REGISTRY_HOST=127.0.0.1
+  exec docker-registry
+fi
+
+# v2
+export REGISTRY_STORAGE_CACHE_BLOBDESCRIPTOR=redis
+export REGISTRY_REDIS_ADDR=127.0.0.1:6379
+export REGISTRY_HTTP_ADDR=127.0.0.1:5000
+exec registry serve /etc/docker/registry/config.yml
