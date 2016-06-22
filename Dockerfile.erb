@@ -30,6 +30,7 @@ ADD <%= ENV.fetch 'TAG' %>/test /tmp/test
 # docker-registry-proxy.crt and docker-registry-proxy.key to this volume, e.g.,
 # "-v /path/to/my/keys:/etc/nginx/ssl"
 VOLUME /etc/nginx/ssl
+VOLUME /var/lib/nginx
 EXPOSE 443
 
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
