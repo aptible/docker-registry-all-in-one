@@ -6,6 +6,7 @@ IMG="$REGISTRY/$REPOSITORY:$TAG"
 
 APP_CONTAINER="test-registry"
 APP_DATA_CONTAINER="${APP_CONTAINER}-data"
+TEST_CONTAINER="registry-canary"
 
 docker run -i --rm "$IMG" bats /tmp/test
 
@@ -15,14 +16,17 @@ function cleanup {
   docker logs "$APP_CONTAINER" || true
   printf "\n\n\n"
   echo "==== CLEANING UP  ===="
-  docker rm -f "$APP_CONTAINER" "$APP_DATA_CONTAINER" || true
+  docker rm -f "$APP_CONTAINER" "$APP_DATA_CONTAINER" "$TEST_CONTAINER" || true
 }
 
 trap cleanup EXIT
 cleanup
 
 # Initialize data container, and create cert.
-docker create --name "$APP_DATA_CONTAINER" "$IMG"
+docker create --name "$APP_DATA_CONTAINER" \
+  -v "/var/lib/nginx" \
+  -v "/etc/nginx/ssl" \
+  "tianon/true"
 
 docker run -it --rm --volumes-from "$APP_DATA_CONTAINER" "$IMG" \
   openssl req -x509 -batch -nodes -newkey rsa:2048 \
@@ -42,11 +46,19 @@ REGISTRY_NAME="127.0.0.1:${REGISTRY_PORT}"
 TEST_REPO="aptible/alpine"
 TEST_IMAGE="${REGISTRY_NAME}/${TEST_REPO}"
 
-docker pull "$TEST_REPO"
-docker tag -f "$TEST_REPO" "$TEST_IMAGE"
+# Make sure our test repo is big enough to force buffering
+docker run --name "$TEST_CONTAINER" "$TEST_REPO" sh -c 'head -c 524288 > /data'
+docker commit "$TEST_CONTAINER" "$TEST_IMAGE"
 
+# We give the log in 10 attempts since the registry might take a little while
+# to come up we don't care if it fails, since we'll know when we fail the push.
 echo "Logging in"
-docker login -e "foo@example.org" -u "$REGISTRY_USER" -p "$REGISTRY_PASS" "$REGISTRY_NAME"
+for _ in $(seq 1 10); do
+  if docker login -e "foo@example.org" -u "$REGISTRY_USER" -p "$REGISTRY_PASS" "$REGISTRY_NAME"; then
+    break
+  fi
+  sleep 1
+done
 
 echo "Test push"
 docker push "$TEST_IMAGE"
