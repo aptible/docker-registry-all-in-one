@@ -41,7 +41,9 @@ teardown() {
   fi
 
   rm /etc/nginx/conf.d/docker-registry-proxy.htpasswd || true
-  rm /etc/nginx/sites-enabled/proxy.conf || true
+  rm /etc/nginx/nginx.conf || true
+  rm /etc/nginx/registry-v1.conf || true
+  rm /etc/nginx/registry-v2.conf || true
   rm -f /etc/nginx/ssl/* || true
   rm -f /var/log/nginx/* || true
   rm -f /var/run/nginx/* || true

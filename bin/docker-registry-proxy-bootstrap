@@ -41,19 +41,24 @@ if [ ! -f /etc/nginx/conf.d/docker-registry-proxy.htpasswd ]; then
       %x(htpasswd -b#{create_opt} /etc/nginx/conf.d/docker-registry-proxy.htpasswd #{user} #{password})
       create_opt = ''
     end"
-    ruby -e "$AUTH_PARSER" || \
-    (echo "Error creating htpasswd file from credentials '$AUTH_CREDENTIALS'" && exit 1)
+
+    ruby -e "$AUTH_PARSER" || {
+      echo "Error creating htpasswd file from credentials '$AUTH_CREDENTIALS'" 
+      exit 1
+    }
 fi
 
 export KEY_FILE
 export CERT_FILE
 export SERVER_NAME
-export REGISTRY_SERVER="127.0.0.1:5000"
 
-mkdir -p /etc/nginx/sites-enabled
-rm -f  /etc/nginx/sites-enabled/default
-erb -T 2 "/etc/nginx/sites-available/proxy.conf.erb" > "/etc/nginx/sites-enabled/proxy.conf" || \
-  (echo "Error creating nginx configuration." && exit 1)
+# Generate all the configuration files.
+for conf in nginx.conf registry-v1.conf registry-v2.conf; do
+  erb -T 2 "/etc/nginx/${conf}.erb" > "/etc/nginx/${conf}" || {
+    echo "Error creating ${conf}"
+    exit 1
+  }
+done
 
 # Ensure that the nginx user can write to temp paths like client_body_temp_path.
 mkdir -p /var/lib/nginx
@@ -62,4 +67,6 @@ chown -R www-data:www-data /var/lib/nginx
 # Ensure that the nginx user can write to its pid file.
 mkdir -p /var/run/nginx
 chown -R www-data:www-data /var/lib/nginx
+
+# And start Nginx.
 exec nginx -c /etc/nginx/nginx.conf

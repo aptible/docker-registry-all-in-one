@@ -1,0 +1,42 @@
+user www-data;
+daemon off;
+pid /var/run/nginx/nginx.pid;
+worker_processes 4;
+
+
+events {
+  worker_connections 768;
+}
+
+http {
+  sendfile on;
+  tcp_nopush on;
+  tcp_nodelay on;
+
+  keepalive_timeout 65;
+  types_hash_max_size 2048;
+
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+
+  ssl_certificate <%= ENV.fetch 'CERT_FILE' %>;
+  ssl_certificate_key <%= ENV.fetch 'KEY_FILE' %>;
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+
+  access_log /dev/stdout;
+  error_log /dev/stderr info;
+
+  gzip on;
+  gzip_disable "msie6";
+
+  # disable any limits to avoid HTTP 413 for large image uploads
+  client_max_body_size 0;
+
+  # required to avoid HTTP 411: see Issue #1486 (https://github.com/docker/docker/issues/1486)
+  chunked_transfer_encoding on;
+
+  include /etc/nginx/registry-v1.conf;
+  include /etc/nginx/registry-v2.conf;
+  include /etc/nginx/conf.d/*.conf;
+}
