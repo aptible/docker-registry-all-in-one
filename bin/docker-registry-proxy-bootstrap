@@ -4,6 +4,11 @@ if [ ! -f /etc/nginx/conf.d/docker-registry-proxy.htpasswd ]; then
   : ${AUTH_CREDENTIALS:?"Error: environment variable AUTH_CREDENTIALS should be populated with a comma-separated list of user:password pairs. Example: \"admin:pa55w0rD\"."}
 fi
 
+if [[ -z "$SERVER_NAME" ]]; then
+  echo "Error: environment variable SERVER_NAME should be populated with the base registry name for this server"
+  exit 1
+fi
+
 # Make sure there's exactly one certificate provided and store its path in CERT_FILE
 NUM_CERTS="$(ls -l /etc/nginx/ssl/*.crt | wc -l)"
 if [ "$NUM_CERTS" -eq 0 ]; then
@@ -26,12 +31,6 @@ elif [ "$NUM_KEYS" -gt 1 ]; then
 fi
 KEY_FILE="$(find /etc/nginx/ssl -maxdepth 1 -name '*.key' -print)"
 
-# Parse the NGiNX server name from the certificate if possible.
-SERVER_NAME="$(openssl x509 -noout -subject -in "$CERT_FILE" | sed -n '/^subject/s/^.*CN=//p')"
-if [ ! "$SERVER_NAME" ]; then
-  export SERVER_NAME=example.com
-fi
-
 # Parse auth credentials, add to a htpasswd file.
 if [ ! -f /etc/nginx/conf.d/docker-registry-proxy.htpasswd ]; then
     AUTH_PARSER="
@@ -50,7 +49,6 @@ fi
 
 export KEY_FILE
 export CERT_FILE
-export SERVER_NAME
 
 # Generate all the configuration files.
 for conf in nginx.conf registry-v1.conf registry-v2.conf; do

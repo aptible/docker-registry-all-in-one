@@ -7,6 +7,8 @@ do_minimal_setup() {
   openssl req -x509 -batch -nodes -newkey rsa:2048 \
     -keyout /etc/nginx/ssl/docker-registry-proxy.key \
     -out /etc/nginx/ssl/docker-registry-proxy.crt
+
+  export SERVER_NAME="example.com"
 }
 
 do_full_setup() {

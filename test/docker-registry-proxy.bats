@@ -20,6 +20,15 @@ setup() {
   [[ "$output" =~ "AUTH_CREDENTIALS should be populated" ]]
 }
 
+@test "docker-registry-proxy-bootstrap requires the SERVER_NAME environment variable to be set" {
+  export AUTH_CREDENTIALS=foobar:password
+  unset SERVER_NAME
+  run timeout 10 docker-registry-proxy-bootstrap
+  echo "$output" # Will be silenced by bats unless the test fails
+  [[ "$status" -eq 1 ]]
+  [[ "$output" =~ "SERVER_NAME should be populated" ]]
+}
+
 @test "docker-registry-proxy-bootstrap requires a key in /etc/nginx/ssl" {
   export AUTH_CREDENTIALS=foobar:password
   rm /etc/nginx/ssl/docker-registry-proxy.key

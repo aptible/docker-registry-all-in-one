@@ -2,6 +2,12 @@
 set -o errexit
 set -o nounset
 
+# This is a testing domain set up in aptible.in, which resolves to 127.0.0.1
+# (the dualstack aliases resolves there as well). Along with the port, it needs
+# to be trusted in the Docker daemon as an insecure registry.
+REGISTRY_BASE_NAME="test-docker-registry-all-in-one.aptible.in"
+REGISTRY_PORT='12000'
+
 IMG="$REGISTRY/$REPOSITORY:$TAG"
 
 APP_CONTAINER="test-registry"
@@ -36,35 +42,61 @@ docker run -it --rm --volumes-from "$APP_DATA_CONTAINER" "$IMG" \
 # Then run the registry
 REGISTRY_USER='aptible'
 REGISTRY_PASS='foobar'
-REGISTRY_PORT='12000' # This needs to be trusted as an insecure registry in the daemon
+
 docker run -d --name "$APP_CONTAINER" --volumes-from "$APP_DATA_CONTAINER" \
   -e "AUTH_CREDENTIALS=${REGISTRY_USER}:${REGISTRY_PASS}" \
+  -e "SERVER_NAME=${REGISTRY_BASE_NAME}" \
   --publish "127.0.0.1:${REGISTRY_PORT}:443" \
   "$IMG"
 
-REGISTRY_NAME="127.0.0.1:${REGISTRY_PORT}"
-TEST_REPO="aptible/alpine"
-TEST_IMAGE="${REGISTRY_NAME}/${TEST_REPO}"
-
-# Make sure our test repo is big enough to force buffering
-docker run --name "$TEST_CONTAINER" "$TEST_REPO" sh -c 'head -c 524288 > /data'
-docker commit "$TEST_CONTAINER" "$TEST_IMAGE"
-
-# We give the log in 10 attempts since the registry might take a little while
-# to come up we don't care if it fails, since we'll know when we fail the push.
-echo "Logging in"
-for _ in $(seq 1 10); do
-  if docker login -e "foo@example.org" -u "$REGISTRY_USER" -p "$REGISTRY_PASS" "$REGISTRY_NAME"; then
-    break
+for HOST_PREFIX in "" "dualstack-v1" "dualstack-v2"; do
+  if [[ -n "$HOST_PREFIX" ]]; then
+    REGISTRY_NAME="${HOST_PREFIX}-${REGISTRY_BASE_NAME}"
+    TEST_REPO_NAME="aptible/alpine-as-${HOST_PREFIX}"
+  else
+    REGISTRY_NAME="$REGISTRY_BASE_NAME"
+    TEST_REPO_NAME="aptible/alpine-as-default"
   fi
-  sleep 1
+
+  TEST_IMAGE="${REGISTRY_NAME}:${REGISTRY_PORT}/${TEST_REPO_NAME}"
+
+  echo "Testing ${TEST_IMAGE}"
+
+  # Create a new test image from aptible/alpine, all the while checking that
+  # it's big enough to force buffering.
+  docker run --name "$TEST_CONTAINER" "aptible/alpine" sh -c 'head -c 524288 > /data'
+  docker commit "$TEST_CONTAINER" "$TEST_IMAGE"
+  docker rm "$TEST_CONTAINER"
+
+  # We give the log in 10 attempts since the registry might take a little while
+  # to come up we don't care if it fails, since we'll know when we fail the push.
+  echo "Logging in"
+  for _ in $(seq 1 10); do
+    if docker login -e "foo@example.org" -u "$REGISTRY_USER" -p "$REGISTRY_PASS" "${REGISTRY_NAME}:${REGISTRY_PORT}"; then
+      break
+    fi
+    sleep 1
+  done
+
+  echo "Test push"
+  docker push "$TEST_IMAGE"
+
+  echo "Test pull"
+  docker rmi "$TEST_IMAGE"
+  docker pull "$TEST_IMAGE"
+
+  echo "Test success for ${TEST_IMAGE}!"
 done
 
-echo "Test push"
-docker push "$TEST_IMAGE"
+# Now, we check that the prefixes addressed the right registries (and that the
+# default did so as well).
+docker logs "$APP_CONTAINER" | grep "PUT /v1/repositories/aptible/alpine-as-dualstack-v1"
+docker logs "$APP_CONTAINER" | grep 'http.request.uri="/v2/aptible/alpine-as-dualstack-v2/blobs/uploads/"'
 
-echo "Test pull"
-docker rmi "$TEST_IMAGE"
-docker pull "$TEST_IMAGE"
+if [[ "$TAG" = 1 ]]; then
+  docker logs "$APP_CONTAINER" | grep "PUT /v1/repositories/aptible/alpine-as-default"
+else
+  docker logs "$APP_CONTAINER" | grep 'http.request.uri="/v2/aptible/alpine-as-default/blobs/uploads/"'
+fi
 
 echo "Done!"
