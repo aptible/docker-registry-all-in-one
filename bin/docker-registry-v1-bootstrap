@@ -1,0 +1,11 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+export CACHE_LRU_REDIS_HOST='127.0.0.1'
+export CACHE_LRU_REDIS_PORT='6379'
+export CACHE_LRU_REDIS_DB=0
+
+export REGISTRY_HOST=127.0.0.1
+
+exec docker-registry

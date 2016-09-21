@@ -7,7 +7,7 @@ apt-get install -y swig python-dev python-mysqldb python-rsa libssl-dev liblzma-
 rm -rf /var/lib/apt/lists/*
 
 pip install --upgrade pip
-pip install docker-registry
+pip install "docker-registry==0.9.1" "docker-registry-core==2.0.3"
 
 # The dependencies packaged by docker-registry are a little broken. So, we need
 # to update them.

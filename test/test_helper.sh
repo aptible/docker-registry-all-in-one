@@ -7,6 +7,8 @@ do_minimal_setup() {
   openssl req -x509 -batch -nodes -newkey rsa:2048 \
     -keyout /etc/nginx/ssl/docker-registry-proxy.key \
     -out /etc/nginx/ssl/docker-registry-proxy.crt
+
+  export SERVER_NAME="example.com"
 }
 
 do_full_setup() {
@@ -41,7 +43,9 @@ teardown() {
   fi
 
   rm /etc/nginx/conf.d/docker-registry-proxy.htpasswd || true
-  rm /etc/nginx/sites-enabled/proxy.conf || true
+  rm /etc/nginx/nginx.conf || true
+  rm /etc/nginx/registry-v1.conf || true
+  rm /etc/nginx/registry-v2.conf || true
   rm -f /etc/nginx/ssl/* || true
   rm -f /var/log/nginx/* || true
   rm -f /var/run/nginx/* || true

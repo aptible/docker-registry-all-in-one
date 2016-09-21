@@ -1,0 +1,11 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+export REGISTRY_STORAGE_CACHE_BLOBDESCRIPTOR=redis
+export REGISTRY_REDIS_ADDR=127.0.0.1:6379
+export REGISTRY_REDIS_DB=1
+
+export REGISTRY_HTTP_ADDR=127.0.0.1:5001
+
+exec registry serve /etc/docker/registry/config.yml

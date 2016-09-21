@@ -12,7 +12,7 @@ env:
 # We have muck around with the Docker configuration so that we can use Docker
 # to test our Docker registry without needing a valid cert.
 script:
-  - sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:12000 /g' -i /etc/default/docker
+  - sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=test-docker-registry-all-in-one.aptible.in:12000 --insecure-registry=dualstack-v1-test-docker-registry-all-in-one.aptible.in:12000 --insecure-registry=dualstack-v2-test-docker-registry-all-in-one.aptible.in:12000 /g' -i /etc/default/docker
   - sudo service docker restart
   - make build
   - make test
