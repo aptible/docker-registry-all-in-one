@@ -11,12 +11,8 @@ pip install "docker-registry==0.9.1" "docker-registry-core==2.0.3"
 
 # The dependencies packaged by docker-registry are a little broken. So, we need
 # to update them.
-pip install --upgrade gevent m2crypto
+pip install --upgrade "gevent==1.1.2" "m2crypto==0.25.1" "boto==2.46.1"
 
 # Put config files in place...
 cp /usr/local/lib/python2.7/dist-packages/config/{config_sample.yml,config.yml}
 cp /usr/local/lib/python2.7/dist-packages/config/boto.cfg /etc/boto.cfg
-
-# Finally, registry includes a patch for ... boto. The prupose is unclear, but
-# we probably need to keep it.
-patch "$(python -c 'import boto; import os; print os.path.dirname(boto.__file__)')/connection.py" < /patches/boto_header_patch.diff

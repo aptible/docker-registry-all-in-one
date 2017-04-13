@@ -9,7 +9,7 @@ apt-get -y install golang librados2
 rm -rf /var/lib/apt/lists/*
 
 GOPKG="github.com/docker/distribution"
-GIT_TAG="v2.5.0"
+GIT_TAG="v2.6.1"
 
 go get "$GOPKG"
 

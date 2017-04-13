@@ -8,7 +8,6 @@ RUN apt-get update \
 
 RUN pip install supervisor==3.3.0
 
-ADD patches /patches
 ADD bin/install-registry-v1.sh /root/
 RUN /root/install-registry-v1.sh
 
