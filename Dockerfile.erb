@@ -8,7 +8,6 @@ RUN apt-get update \
 
 RUN pip install supervisor==3.3.0
 
-ADD patches /patches
 ADD bin/install-registry-v1.sh /root/
 RUN /root/install-registry-v1.sh
 
@@ -22,6 +21,7 @@ ADD bin/docker-registry-v2-bootstrap /usr/local/bin/
 
 ADD etc/supervisord.conf /etc/supervisord.conf
 ADD etc/redis.conf /etc/redis/redis.conf
+ADD etc/registry-v2.yml /etc/registry-v2.yml
 
 # Remove some Nginx files we don't need for the sake of keeping things clean
 RUN rm -rf /etc/nginx/sites-enabled /etc/nginx/sites-available /etc/nginx/nginx.conf

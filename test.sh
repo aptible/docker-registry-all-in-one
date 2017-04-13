@@ -46,6 +46,7 @@ REGISTRY_PASS='foobar'
 docker run -d --name "$APP_CONTAINER" --volumes-from "$APP_DATA_CONTAINER" \
   -e "AUTH_CREDENTIALS=${REGISTRY_USER}:${REGISTRY_PASS}" \
   -e "SERVER_NAME=${REGISTRY_BASE_NAME}" \
+  -e "REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/tmp/test-storage" \
   --publish "127.0.0.1:${REGISTRY_PORT}:443" \
   "$IMG"
 
