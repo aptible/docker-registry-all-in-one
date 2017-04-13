@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export TIMEOUT_STATUS=124
+export REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/tmp/test-storage
 
 do_minimal_setup() {
   mkdir -p /etc/nginx/ssl
@@ -14,6 +15,8 @@ do_minimal_setup() {
 do_full_setup() {
   do_minimal_setup
   export AUTH_CREDENTIALS=foobar:password
+
+  mkdir -p "$REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY"
 
   supervisord -c /etc/supervisord.conf &
   SUPERVISOR_PID=$!
@@ -49,4 +52,5 @@ teardown() {
   rm -f /etc/nginx/ssl/* || true
   rm -f /var/log/nginx/* || true
   rm -f /var/run/nginx/* || true
+  rm -rf "$REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY" || true
 }

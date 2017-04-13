@@ -8,4 +8,4 @@ export REGISTRY_REDIS_DB=1
 
 export REGISTRY_HTTP_ADDR=127.0.0.1:5001
 
-exec registry serve /etc/docker/registry/config.yml
+exec registry serve /etc/registry-v2.yml
