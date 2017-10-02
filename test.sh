@@ -91,13 +91,13 @@ done
 
 # Now, we check that the prefixes addressed the right registries (and that the
 # default did so as well).
-docker logs "$APP_CONTAINER" | grep "PUT /v1/repositories/aptible/alpine-as-dualstack-v1"
-docker logs "$APP_CONTAINER" | grep 'http.request.uri="/v2/aptible/alpine-as-dualstack-v2/blobs/uploads/"'
+docker logs "$APP_CONTAINER" 2>&1 | grep "PUT /v1/repositories/aptible/alpine-as-dualstack-v1"
+docker logs "$APP_CONTAINER" 2>&1 | grep 'http.request.uri="/v2/aptible/alpine-as-dualstack-v2/blobs/uploads/"'
 
 if [[ "$TAG" = 1 ]]; then
-  docker logs "$APP_CONTAINER" | grep "PUT /v1/repositories/aptible/alpine-as-default"
+  docker logs "$APP_CONTAINER" 2>&1 | grep "PUT /v1/repositories/aptible/alpine-as-default"
 else
-  docker logs "$APP_CONTAINER" | grep 'http.request.uri="/v2/aptible/alpine-as-default/blobs/uploads/"'
+  docker logs "$APP_CONTAINER" 2>&1 | grep 'http.request.uri="/v2/aptible/alpine-as-default/blobs/uploads/"'
 fi
 
 echo "Done!"
