@@ -22,7 +22,7 @@ mv go /usr/local/
 rm "$GO_FILENAME"
 
 GOPKG="github.com/docker/distribution"
-GIT_REF="5db89f0ca68677abc5eefce8f2a0a772c98ba52d"
+GIT_REF="bb49a1685d2773cb43dacc16e100419f310ba347"
 
 go get "$GOPKG"
 
