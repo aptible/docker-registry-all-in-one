@@ -11,6 +11,7 @@ RUN pip install supervisor==3.3.0
 ADD bin/install-registry-v1.sh /root/
 RUN /root/install-registry-v1.sh
 
+ENV PATH="/usr/local/go/bin:${PATH}"
 ADD bin/install-registry-v2.sh /root/
 RUN /root/install-registry-v2.sh
 
