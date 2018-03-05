@@ -73,7 +73,7 @@ for HOST_PREFIX in "" "dualstack-v1" "dualstack-v2"; do
   # to come up we don't care if it fails, since we'll know when we fail the push.
   echo "Logging in"
   for _ in $(seq 1 10); do
-    if docker login -e "foo@example.org" -u "$REGISTRY_USER" -p "$REGISTRY_PASS" "${REGISTRY_NAME}:${REGISTRY_PORT}"; then
+    if docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS" "${REGISTRY_NAME}:${REGISTRY_PORT}"; then
       break
     fi
     sleep 1
